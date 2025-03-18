@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ThingSpeak GPS Data on 高德地图</title>
+  <meta charset="utf-8" />
+  <style>
+    #map {
+      height: 100vh; /* 全屏显示地图 */
+      width: 100%;
+    }
+  </style>
+  <!-- 加载高德地图 JavaScript API -->
+  <script src="https://webapi.amap.com/maps?v=2.0&key=367798128dbbe3c04d962b90fb3ef833"></script>
+  <script>
+    // ThingSpeak API 配置
+    const channelID = "2882720"; // 替换为你的 ThingSpeak 频道 ID
+    const apiKey = "WXCUYDUHRVTUSU0E"; // 替换为你的 ThingSpeak Read API Key
+    const apiUrl = `https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${apiKey}&results=100`;
+
+    // 全局变量
+    let map; // 地图实例
+    let markers = []; // 标记数组
+    let polyline; // 轨迹线
+    const maxMarkers = 5; // 最大标记数量
+
+    // 初始化地图
+    function initMap() {
+      // 创建地图实例
+      map = new AMap.Map("map", {
+        zoom: 10, // 初始缩放级别
+        center: [116.397428, 39.90923], // 初始中心点（北京）
+      });
+
+      // 加载初始数据
+      fetchData();
+
+      // 定时刷新数据（每 5 秒）
+      setInterval(fetchData, 5000);
+    }
+
+    // 从 ThingSpeak 获取数据
+    function fetchData() {
+      fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+          const points = []; // 轨迹点数组
+          data.feeds.forEach(feed => {
+            const lng = parseFloat(feed.field2); // 经度
+            const lat = parseFloat(feed.field1); // 纬度
+            if (!isNaN(lat) && !isNaN(lng)) {
+              points.push([lng, lat]); // 添加到轨迹点数组
+            }
+          });
+
+          // 只保留最新的 5 个点
+          if (points.length > maxMarkers) {
+            points.splice(0, points.length - maxMarkers);
+          }
+
+          // 更新地图标记和轨迹
+          updateMarkers(points);
+          updatePolyline(points);
+        })
+        .catch(error => console.error("Error fetching data:", error));
+    }
+
+    // 更新地图标记
+    function updateMarkers(points) {
+      // 清除旧标记
+      markers.forEach(marker => marker.setMap(null));
+      markers = [];
+
+      // 添加新标记
+      points.forEach(point => {
+        const marker = new AMap.Marker({
+          position: point,
+          map: map,
+          icon: "https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png", // 自定义标记图标
+        });
+        markers.push(marker);
+      });
+
+      // 调整地图中心点
+      if (points.length > 0) {
+        map.setCenter(points[points.length - 1]);
+      }
+    }
+
+    // 更新轨迹线
+    function updatePolyline(points) {
+      // 清除旧轨迹线
+      if (polyline) {
+        polyline.setMap(null);
+      }
+
+      // 添加新轨迹线
+      polyline = new AMap.Polyline({
+        path: points,
+        strokeColor: "#FF0000", // 轨迹颜色
+        strokeWeight: 2, // 轨迹宽度
+        map: map,
+      });
+    }
+
+    // 页面加载完成后初始化地图
+    window.onload = initMap;
+  </script>
+</head>
+<body>
+  <div id="map"></div>
+</body>
+</html>
