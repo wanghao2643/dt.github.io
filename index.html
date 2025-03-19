@@ -21,13 +21,13 @@
     let map; // 地图实例
     let markers = []; // 标记数组
     let polyline; // 轨迹线
-    const maxMarkers = 5; // 最大标记数量
+    const maxMarkers = 50; // 最大标记数量
 
     // 初始化地图
     function initMap() {
       // 创建地图实例
       map = new AMap.Map("map", {
-        zoom: 10, // 初始缩放级别
+        zoom: 100, // 初始缩放级别
         center: [116.397428, 39.90923], // 初始中心点（北京）
       });
 
@@ -35,7 +35,7 @@
       fetchData();
 
       // 定时刷新数据（每 5 秒）
-      setInterval(fetchData, 5000);
+      setInterval(fetchData, 15000);
     }
 
     // 从 ThingSpeak 获取数据
@@ -97,7 +97,7 @@
       polyline = new AMap.Polyline({
         path: points,
         strokeColor: "#FF0000", // 轨迹颜色
-        strokeWeight: 2, // 轨迹宽度
+        strokeWeight: 5, // 轨迹宽度
         map: map,
       });
     }
